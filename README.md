@@ -2,6 +2,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,13 +27,35 @@ class MarkdownTextEditor extends StatefulWidget {
 }
 
 class _MarkdownTextEditorState extends State<MarkdownTextEditor> {
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+
+  void _toggleBold() {
+    final text = _controller.text;
+    final selection = _controller.selection;
+    if (selection.isValid) {
+      final selectedText = text.substring(selection.start, selection.end);
+      final isBold = selectedText.startsWith('**') && selectedText.endsWith('**');
+      final newText = isBold
+          ? selectedText.substring(2, selectedText.length - 2)
+          : '**$selectedText**';
+      _controller.value = TextEditingValue(
+        text: text.replaceRange(selection.start, selection.end, newText),
+        selection: TextSelection.collapsed(offset: selection.start + newText.length),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Markdown Text Editor'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.format_bold),
+            onPressed: _toggleBold,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -51,54 +74,13 @@ class _MarkdownTextEditorState extends State<MarkdownTextEditor> {
             ),
             SizedBox(height: 16),
             Expanded(
-              child: SingleChildScrollView(
-                child: RichText(
-                  text: TextSpan(
-                    children: _buildTextSpans(_controller.text),
-                  ),
-                ),
+              child: Markdown(
+                data: _controller.text,
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  List<TextSpan> _buildTextSpans(String text) {
-    final List<TextSpan> spans = [];
-    final RegExp boldPattern = RegExp(r'\*\*(.*?)\*\*');
-    final RegExp italicPattern = RegExp(r'\*(.*?)\*');
-
-    int lastMatchEnd = 0;
-
-    for (final match in boldPattern.allMatches(text)) {
-      if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
-      }
-      spans.add(TextSpan(
-          text: match.group(1),
-          style: TextStyle(fontWeight: FontWeight.bold)));
-      lastMatchEnd = match.end;
-    }
-
-    String remainingText = text.substring(lastMatchEnd);
-    lastMatchEnd = 0;
-
-    for (final match in italicPattern.allMatches(remainingText)) {
-      if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(text: remainingText.substring(lastMatchEnd, match.start)));
-      }
-      spans.add(TextSpan(
-          text: match.group(1),
-          style: TextStyle(fontStyle: FontStyle.italic)));
-      lastMatchEnd = match.end;
-    }
-
-    if (lastMatchEnd < remainingText.length) {
-      spans.add(TextSpan(text: remainingText.substring(lastMatchEnd)));
-    }
-
-    return spans;
   }
 }
