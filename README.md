@@ -9,96 +9,63 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyHomePage(),
+      title: 'Flutter Quill Editor',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: QuillEditorPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class QuillEditorPage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _QuillEditorPageState createState() => _QuillEditorPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  late quill.QuillController _controller;
-  bool _showFormattedText = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize the controller with an empty document
-    final doc = quill.Document();
-    _controller = quill.QuillController(
-      document: doc,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
-  }
-
-  void _toggleFormattedText() {
-    setState(() {
-      _showFormattedText = !_showFormattedText;
-    });
-  }
+class _QuillEditorPageState extends State<QuillEditorPage> {
+  final quill.QuillController _controller = quill.QuillController.basic();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quill Editor Example'),
+        title: Text('Quill Editor'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: quill.QuillToolbar.basic(controller: _controller),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: quill.QuillEditor(
-                      controller: _controller,
-                      scrollController: ScrollController(),
-                      scrollable: true,
-                      focusNode: FocusNode(),
-                      autoFocus: true,
-                      readOnly: false,
-                      expands: true,
-                      padding: EdgeInsets.zero,
-                      customStyles: DefaultStyles(),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _toggleFormattedText,
-                    child: Text('Show Formatted Text'),
-                  ),
-                  if (_showFormattedText)
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      color: Colors.grey[200],
-                      child: quill.QuillEditor(
-                        controller: quill.QuillController(
-                          document: _controller.document,
-                          selection: const TextSelection.collapsed(offset: 0),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: SingleChildScrollView(
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        quill.QuillEditor(
+                          controller: _controller,
+                          readOnly: false, // true for view only mode
+                          autoFocus: true,
+                          focusNode: _focusNode,
+                          scrollController: ScrollController(),
+                          scrollable: false,
+                          padding: EdgeInsets.all(8.0),
+                          expands: false,
                         ),
-                        scrollController: ScrollController(),
-                        scrollable: true,
-                        focusNode: FocusNode(),
-                        autoFocus: false,
-                        readOnly: true,
-                        expands: false,
-                        padding: EdgeInsets.zero,
-                        customStyles: DefaultStyles(),
-                      ),
+                      ],
                     ),
-                ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 16),
+            quill.QuillToolbar.basic(controller: _controller),
+          ],
+        ),
       ),
     );
   }
